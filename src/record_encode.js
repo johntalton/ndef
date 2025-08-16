@@ -108,7 +108,7 @@ export class NDEFRecordEncoder {
 		result.set([ typeLength ], 1)
 		result.set(payloadLengthBuffer, 2)
 
-		var offset = 1 + 1 + payloadLengthBuffer.byteLength
+		let offset = 1 + 1 + payloadLengthBuffer.byteLength
 		if(hasId) {
 			result.set([ idLength ], offset)
 			offset += 1
@@ -129,20 +129,6 @@ export class NDEFRecordEncoder {
 		}
 
 		return result
-
-		// const idParts = hasId ? idBufferU8 : []
-		// const parts = [
-		// 	header,
-		// 	typeLength,
-		// 	 ...payloadLengthBuffer,
-		// 	 hasId ? idLength : undefined,
-		// 	...typeBufferU8,
-		// 	 ...idParts,
-		// 	 ...payloadBufferU8
-		// 	]
-		// 	.filter(value => value !== undefined)
-
-		// return Uint8Array.from(parts)
 	}
 
 

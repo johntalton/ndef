@@ -9,7 +9,7 @@ export function ConsoleLogRecords(records, depth = 1) {
 		if(record.id !== undefined) { console.log(`${prefix}id:`, record.id) }
 		console.log(`${prefix}recordType:`, record.recordType)
 
-		if(record.recordType === 'url') {
+		if(record.recordType === 'url' || record.recordType === 'absolute-url') {
 			const decoder = new TextDecoder(record.encoding ?? 'utf-8')
 			console.log(`${prefix}url:`, URL.parse(decoder.decode(record.data))?.href)
 		}
@@ -42,7 +42,7 @@ export function ConsoleLogRecords(records, depth = 1) {
 			}
 		}
 		else if(record.recordType === 'smart-poster') {
-			logRecords(record.toRecords(), depth + 1)
+			ConsoleLogRecords(record.toRecords(), depth + 1)
 		}
 		else if(record.recordType === ':t') {
 			const decoder = new TextDecoder()
