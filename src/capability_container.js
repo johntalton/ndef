@@ -144,7 +144,7 @@ export class CapabilityContainer {
 		])
 	}
 
-	static *_parseTLV(u8, context) {
+	static *_decodeTLV(u8, context) {
 		let cursor = 0
 		while(cursor <  u8.byteLength) {
 
@@ -189,7 +189,7 @@ export class CapabilityContainer {
 	 * @param {ArrayBuffer|ArrayBufferView} buffer
 	 * @param {string} [context = CONTEXT_ROOT]
 	 */
-	static parse(buffer, context = CONTEXT_ROOT) {
+	static decode(buffer, context = CONTEXT_ROOT) {
 		const u8 = ArrayBuffer.isView(buffer) ?
 			new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength) :
 			new Uint8Array(buffer, 0, buffer.byteLength)
@@ -209,7 +209,7 @@ export class CapabilityContainer {
 		const lastIndex = extendedHeader ? 8 : 4
 		const tlvBuffer = u8.subarray(lastIndex, u8.byteLength)
 
-		const records = [ ...CapabilityContainer._parseTLV(tlvBuffer, context) ]
+		const records = [ ...CapabilityContainer._decodeTLV(tlvBuffer, context) ]
 
 		return new CapabilityContainer({
 			magic,
