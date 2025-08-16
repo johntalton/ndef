@@ -152,6 +152,13 @@ export class CapabilityContainer {
 			const tlvType = u8[cursor]
 			cursor += 1
 
+			// immediately check if this is the Terminator as the remain bytes are not valid
+			if(tlvType === TLV_TYPE_TERMINATOR) {
+				//
+				console.log('TLV Terminator reached', cursor, u8.byteLength)
+				break
+			}
+
 			const _tlvLength = u8[cursor]
 			cursor += 1
 
@@ -171,11 +178,6 @@ export class CapabilityContainer {
 			else if(tlvType === TLV_TYPE_PROPRIETARY) {
 				// ...
 				console.warn('TLV proprietary')
-			}
-			else if(tlvType === TLV_TYPE_TERMINATOR) {
-				//
-				console.log('TLV Terminator reached', cursor, u8.byteLength)
-				break
 			}
 			else {
 				console.warn('unknown TLV type', tlvType)
