@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./log": "./src/util_console.js"
   },
   "files": [ "./src/**/*.js"]
 }
