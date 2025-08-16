@@ -1,6 +1,6 @@
 import { SMART_POSTER_ACTIONS_MAP } from './ndef.js'
 
-export function ConsoleLogRecord(records, depth = 1) {
+export function ConsoleLogRecords(records, depth = 1) {
 	const prefix0 = new Array(depth).fill('\t').join('')
 	const prefix = new Array(depth + 1).fill('\t').join('')
 
