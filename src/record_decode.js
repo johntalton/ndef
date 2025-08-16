@@ -6,6 +6,7 @@ import {
 	MIME_APPLICATION_OCTET_STREAM,
 	RECORD_TYPE_ABSOLUTE_URL,
 	RECORD_TYPE_EMPTY,
+	RECORD_TYPE_EXTERNAL_SEPARATOR,
 	RECORD_TYPE_LOCAL_TYPE_PREFIX,
 	RECORD_TYPE_MIME,
 	RECORD_TYPE_SMART_POSTER,
@@ -280,12 +281,13 @@ export class NDEFRecordDecoder {
 				}
 				else {
 					// 2.
-					const [ _domain, _type ] = splitExternalType(type)
+					const [ _domain, externalType ] = splitExternalType(type)
 					// 3.
 					// todo Sanitize Domain ToUnicode
+					const domain = _domain
 
 					yield new NDEFRecord({
-						recordType: _domain + ':' + _type,
+						recordType: domain + RECORD_TYPE_EXTERNAL_SEPARATOR + externalType,
 						data: payload
 					})
 				}

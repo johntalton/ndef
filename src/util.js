@@ -1,6 +1,7 @@
 import {
 	KNOWN_RECORD_TYPES,
 	LOCAL_TYPE_MAX_LENGTH,
+	RECORD_TYPE_EXTERNAL_SEPARATOR,
 	RECORD_TYPE_LOCAL_TYPE_PREFIX,
 	URI_PREFIX, URI_PREFIX_ID_NONE
 } from './ndef.js'
@@ -84,7 +85,7 @@ export function validateLocalType(type) {
  */
 // Web NFC 9.12.3
 export function splitExternalType(type) {
-	const colonIndex = type.indexOf(':')
+	const colonIndex = type.indexOf(RECORD_TYPE_EXTERNAL_SEPARATOR)
 	if(colonIndex < 0) { return [] }
 	return [
 		type.substring(0, colonIndex),

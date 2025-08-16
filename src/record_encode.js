@@ -1,4 +1,3 @@
-import { NDEFMessage } from './message.js'
 import { NDEFMessageEncoder } from './message_encoder.js'
 import {
 	CONTEXT_EXTERNAL,
@@ -9,7 +8,7 @@ import {
 	MIME_APPLICATION_OCTET_STREAM,
 	RECORD_TYPE_ABSOLUTE_URL,
 	RECORD_TYPE_EMPTY,
-	RECORD_TYPE_EXTERNAL_CUSTOM_PREFIX,
+	RECORD_TYPE_EXTERNAL_SEPARATOR,
 	RECORD_TYPE_EXTERNAL_MAX_LENGTH,
 	RECORD_TYPE_LOCAL_TYPE_PREFIX,
 	RECORD_TYPE_MIME,
@@ -57,36 +56,31 @@ export class NDEFRecordEncoder {
 
 	/**
 	 * @param {EncodingHeader} headers
-	 * @param {ArrayBuffer|ArrayBufferView|undefined} typeBuffer
-	 * @param {ArrayBuffer|ArrayBufferView|undefined} idBuffer
+	 * @param {string|undefined} type
+	 * @param {string|undefined} id
 	 * @param {ArrayBuffer|ArrayBufferView|undefined} payloadBuffer
 	 * @returns {ArrayBuffer|ArrayBufferView}
 	 */
-	static _encode(headers, typeBuffer, idBuffer, payloadBuffer) {
+	static _encode(headers, type, id, payloadBuffer) {
 		const { start, end, TNF } = headers
 
-		const hasType = (typeBuffer !== undefined)
-		const typeLength = hasType ? typeBuffer.byteLength : 0
-		const hasPayload = (payloadBuffer !== undefined)
+		const encoder = new TextEncoder()
+
+		const typeBufferU8 = (type !== undefined) ? encoder.encode(type) : undefined
+		const idBufferU8 = (id !== undefined) ? encoder.encode(id) : undefined
+
+		const hasType = typeBufferU8 !== undefined
+		const hasId = idBufferU8 !== undefined
+		const hasPayload = payloadBuffer !== undefined
+
+		const typeLength = hasType ? typeBufferU8.byteLength : 0
+		const idLength = hasId ? idBufferU8.byteLength : 0
 		const payloadLength = hasPayload ? payloadBuffer.byteLength : 0
-		const hasId = idBuffer !== undefined
-		const idLength = hasId ? idBuffer.byteLength : 0
 
-		const payloadBufferU8 = hasPayload ? ArrayBuffer.isView(payloadBuffer) ?
+		const payloadBufferU8 = hasPayload ? (ArrayBuffer.isView(payloadBuffer) ?
 			new Uint8Array(payloadBuffer.buffer, payloadBuffer.byteOffset, payloadBuffer.byteLength) :
-			new Uint8Array(payloadBuffer, 0 ,payloadBuffer?.byteLength) :
-			[]
-
-		const typeBufferU8 = hasType ? ArrayBuffer.isView(typeBuffer) ?
-			new Uint8Array(typeBuffer.buffer, typeBuffer.byteOffset, typeBuffer.byteLength) :
-			new Uint8Array(typeBuffer, 0, typeBuffer.byteLength) :
-			[]
-
-		const idBufferU8 = hasId ? ArrayBuffer.isView(idBuffer) ?
-			new Uint8Array(idBuffer.buffer, idBuffer.byteOffset, idBuffer.byteLength) :
-			new Uint8Array(idBuffer, 0, idBuffer.byteLength) :
-			[]
-
+			new Uint8Array(payloadBuffer, 0 ,payloadBuffer?.byteLength)) :
+			undefined
 
 		const short =  hasPayload ? (payloadLength < 255) : true
 		const chunked = false
@@ -124,14 +118,12 @@ export class NDEFRecordEncoder {
 			offset += idLength
 		}
 
-		if(hasPayload) {
+		if(payloadBufferU8 !== undefined) {
 			result.set(payloadBufferU8, offset)
 		}
 
 		return result
 	}
-
-
 
 	/**
 	 * @param {RecordInit} record
@@ -142,19 +134,13 @@ export class NDEFRecordEncoder {
 		const { start, end, context, recordDepth } = options
 		const { id, recordType, data } = record
 
-		const encoder = new TextEncoder()
-
-		// 2.
-		const hasId = id !== undefined
-		const idBuffer = hasId ? encoder.encode(id) : undefined
-
 		// 3.
 		if(recordType === RECORD_TYPE_EMPTY) {
 			// Web NFC 9.12.5
 			// 1.
 			if(record.mediaType !== undefined) { throw new TypeError('empty type must not have mediaType') }
 			// 2.
-			if(hasId) { throw new TypeError('empty type must not have id') }
+			if(id !== undefined) { throw new TypeError('empty type must not have id') }
 
 			return NDEFRecordEncoder._encode({
 				TNF: TNF_EMPTY,
@@ -162,6 +148,8 @@ export class NDEFRecordEncoder {
 			}, undefined, undefined, undefined)
 		}
 		else if(recordType === RECORD_TYPE_URL) {
+			const encoder = new TextEncoder()
+
 			// Web NFC 9.12.7
 			// 1.
 			if(record.mediaType !== undefined) { throw new TypeError('url must not have mediaType') }
@@ -179,13 +167,10 @@ export class NDEFRecordEncoder {
 			// 10.
 			const payloadBuffer = Uint8Array.from([ prefixId, ...dataBuffer ])
 
-			// 13.
-			const typeBuffer = encoder.encode(WELL_KNOWN_TYPE_URL)
-
 			return NDEFRecordEncoder._encode({
 				TNF: TNF_WELL_KNOWN,
 				start, end
-			}, typeBuffer, idBuffer, payloadBuffer)
+			}, WELL_KNOWN_TYPE_URL, id, payloadBuffer)
 		}
 		else if(recordType === RECORD_TYPE_ABSOLUTE_URL) {
 			// Web NFC 9.12.12
@@ -202,14 +187,16 @@ export class NDEFRecordEncoder {
 			try { new URL(data.toString()) } catch(e) { throw new SyntaxError('absolute url data not parsable as url', { cause: e })}
 
 			// 8.
-			const typeBuffer = encoder.encode(data.toString())
+			const type = data.toString()
 
 			return NDEFRecordEncoder._encode({
 				TNF: TNF_ABSOLUTE_URL,
 				start, end
-			}, typeBuffer, idBuffer, undefined)
+			}, type, id, undefined)
 		}
 		else if(recordType === RECORD_TYPE_TEXT) {
+			const encoder = new TextEncoder()
+
 			// Web NFC 9.12.6
 			// 1.
 			if(record.mediaType !== undefined) { throw new TypeError('text must not have mediaType') }
@@ -234,13 +221,10 @@ export class NDEFRecordEncoder {
 			const textBuffer = isBufferSource(data) ? (ArrayBuffer.isView(data) ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength) : new Uint8Array(data)) : encoder.encode(data.toString())
 			const payloadBuffer = Uint8Array.from([ header, ...langBuffer, ...textBuffer ])
 
-			// 11.
-			const typeBuffer = encoder.encode(WELL_KNOWN_TYPE_TEXT)
-
 			return NDEFRecordEncoder._encode({
 				TNF: TNF_WELL_KNOWN,
 				start, end
-			}, typeBuffer, idBuffer, payloadBuffer)
+			}, WELL_KNOWN_TYPE_TEXT, id, payloadBuffer)
 		}
 		else if(recordType === RECORD_TYPE_MIME) {
 			// Web NFC 9.12.8
@@ -253,12 +237,12 @@ export class NDEFRecordEncoder {
 			// 8.
 			// todo step 8 suggest ?serializing? the mime type from object
 			// const mimeType = isMimeType(_mimeType) ? serializeMimeType(_mimeType) : _mimeType
-			const typeBuffer = encoder.encode(mimeType)
+			const type = mimeType
 
 			return NDEFRecordEncoder._encode({
 				TNF: TNF_MIME,
 				start, end
-			}, typeBuffer, idBuffer, data)
+			}, type, id, data)
 		}
 		else if(recordType === RECORD_TYPE_SMART_POSTER) {
 			// Web NFC 9.12.11
@@ -267,15 +251,13 @@ export class NDEFRecordEncoder {
 			// 2.
 			if(!isMessage(data)) { throw new TypeError('smart-poster must contain record data') }
 
-			// 3.
-			const typeBuffer = encoder.encode(WELL_KNOWN_TYPE_SMART_POSTER)
 			// 4.
 			const payload = NDEFMessageEncoder.encode(data, CONTEXT_SMART_POSTER, recordDepth)
 
 			return NDEFRecordEncoder._encode({
 				TNF: TNF_WELL_KNOWN,
 				start, end
-			}, typeBuffer, idBuffer, payload)
+			}, WELL_KNOWN_TYPE_SMART_POSTER, id, payload)
 		}
 		// 4.
 		else if(recordType.startsWith(RECORD_TYPE_LOCAL_TYPE_PREFIX)) {
@@ -305,13 +287,13 @@ export class NDEFRecordEncoder {
 			}
 
 			// 8. and 9.
-			const typeBuffer = encoder.encode(localTypeName)
+			const type = localTypeName
 			const payload = isBufferSource(data) ? data : NDEFMessageEncoder.encode(data, CONTEXT_LOCAL, recordDepth)
 
 			return NDEFRecordEncoder._encode({
 				TNF: TNF_WELL_KNOWN,
 				start, end
-			}, typeBuffer, idBuffer, payload)
+			}, type, id, payload)
 		}
 		// 5.
 		else if(validateExternalType(recordType)) {
@@ -319,15 +301,15 @@ export class NDEFRecordEncoder {
 			// 1.
 			if(record.mediaType !== undefined) { throw new TypeError('external-type must not have mediaType') }
 			// 2.
-			const [ domain, type ] = splitExternalType(recordType)
+			const [ domain, externalType ] = splitExternalType(recordType)
 			// todo step 3 suggest sanitizing the Domain to ASCII
 
 			// 4.
-			const customTypeName = RECORD_TYPE_EXTERNAL_CUSTOM_PREFIX + type
+			const customTypeName = domain + RECORD_TYPE_EXTERNAL_SEPARATOR + externalType
 			// 5.
 			if(customTypeName.length > RECORD_TYPE_EXTERNAL_MAX_LENGTH) { throw new TypeError('external-type type name exceeds max length') }
 			// 6.
-			const typeBuffer = encoder.encode(customTypeName)
+			const type = customTypeName
 			// 7.
 			if(!isBufferSource(data) && !isMessage(data)) { throw new TypeError('external-type data must be BufferSource or Message') }
 
@@ -336,7 +318,7 @@ export class NDEFRecordEncoder {
 			return NDEFRecordEncoder._encode({
 				TNF: TNF_EXTERNAL,
 				start, end
-			}, typeBuffer, idBuffer, payload)
+			}, type, id, payload)
 		}
 
 		// 6.

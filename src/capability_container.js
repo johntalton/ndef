@@ -3,6 +3,8 @@ import { NDEFMessageDecoder } from './message_decoder.js'
 import { NDEFMessageEncoder } from './message_encoder.js'
 import { CONTEXT_ROOT } from './ndef.js'
 
+/** @import { MessageInit } from './ndef.js' */
+
 export const CC_MAGIC_ONE_BYTE = 0xE1
 export const CC_MAGIC_TWO_BYTE = 0xe2
 
@@ -79,7 +81,6 @@ export class CapabilityContainer {
 	#write
 	#message
 
-
 	constructor(options) {
 		this.#magic = options.magic
 		this.#major = options.major
@@ -95,10 +96,19 @@ export class CapabilityContainer {
 	get write() { return this.#write }
 	get message() { return this.#message }
 
-
+	/**
+	 * @param {MessageInit} message
+	 * @param {Object} [options = {}]
+	 * @param {string} [options.read = CC_ACCESS_READ_ALWAYS]
+	 * @param {string} [options.write = CC_ACCESS_WRITE_ALWAYS]
+	 * @param {number} [options.mLen = ST25DV16_M_LEN]
+	 * @param {number} [options.features = ST25DV16_FEATURE]
+	 * @param {AbortSignal} [options.signal = undefined]
+	 * @returns {ArrayBuffer|ArrayBufferView}
+	 */
 	static encode(message, {
-		read = CC_ACCESS_READ_ALWAYS_ID,
-		write = CC_ACCESS_WRITE_ALWAYS_ID,
+		read = CC_ACCESS_READ_ALWAYS,
+		write = CC_ACCESS_WRITE_ALWAYS,
 		mLen = ST25DV16_M_LEN,
 		features = ST25DV16_FEATURE,
 		signal = undefined
@@ -144,6 +154,10 @@ export class CapabilityContainer {
 		])
 	}
 
+	/**
+	 * @param {Uint8Array} u8
+	 * @param {string} context
+	 */
 	static *_decodeTLV(u8, context) {
 		let cursor = 0
 		while(cursor <  u8.byteLength) {
