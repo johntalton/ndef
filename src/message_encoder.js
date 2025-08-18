@@ -16,7 +16,7 @@ import {
 
 export class NDEFMessageEncoder {
 		/**
-	 * @param {MessageInit} message
+	 * @param {MessageInit|string|String|ArrayBuffer|ArrayBufferView} message
 	 * @param {string} context
 	 * @param {number} recordDepth
 	 * @returns {ArrayBuffer|ArrayBufferView}

@@ -97,7 +97,7 @@ export class CapabilityContainer {
 	get message() { return this.#message }
 
 	/**
-	 * @param {MessageInit} message
+	 * @param {MessageInit|string|String|ArrayBuffer|ArrayBufferView} message
 	 * @param {Object} [options = {}]
 	 * @param {string} [options.read = CC_ACCESS_READ_ALWAYS]
 	 * @param {string} [options.write = CC_ACCESS_WRITE_ALWAYS]
