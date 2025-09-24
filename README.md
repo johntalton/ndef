@@ -1,12 +1,14 @@
 # NDEF
 
-![CI](https://github.com/johntalton/st25dv/workflows/CI/badge.svg)
-
 NDEF encode and decode library.
 
 Follows [Web NFC](https://w3c.github.io/web-nfc) Spec conventions.
 
 With support for Capability Container and Type 5 wrapper objects.
+
+[![npm Version](http://img.shields.io/npm/v/@johntalton/ndef.svg)](https://www.npmjs.com/package/@johntalton/ndef)
+![GitHub package.json version](https://img.shields.io/github/package-json/v/johntalton/ndef)
+[![CI](https://github.com/johntalton/ndef/actions/workflows/CI.yml/badge.svg)](https://github.com/johntalton/ndef/actions/workflows/CI.yml)
 
 ## Encoder / Decoder
 
