@@ -1,10 +1,14 @@
 {
   "name": "@johntalton/ndef",
-  "version": "1.0.2",
+  "version": "1.0.3",
+  "license": "MIT",
   "type": "module",
   "exports": {
     ".": "./src/index.js",
     "./log": "./src/util_console.js"
   },
-  "files": [ "./src/**/*.js"]
+  "files": [ "./src/**/*.js"],
+  "repository": {
+    "url": "https://github.com/johntalton/ndef"
+  }
 }
